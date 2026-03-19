@@ -16,6 +16,7 @@ import { UserContext } from "../Auth/Auth";
 import { useIntersectionObserver } from "../../hooks/useIntersectionObserver";
 import { isMobile } from "./Message/MessageMedia";
 import AnimatedSticker from "./Message/AnimatedSticker";
+import { cacheMessages, cacheMessage, loadCachedMessages } from "../Util/messageCache";
 
 const MessageList = forwardRef(({ MessageListRef, gradientRenderer }, ref) => {
     const [isLoaded, setIsLoaded] = useState(false)
@@ -78,8 +79,11 @@ const MessageList = forwardRef(({ MessageListRef, gradientRenderer }, ref) => {
             const elapsed = Date.now() - startDelay;
             const delay = Math.max(0, 300 - elapsed);
 
+            const chatId = activeChat.id.value;
+            cacheMessages(chatId, data);
+
             setTimeout(() => {
-                dispatch(setMessages({ chatId: activeChat.id.value, messages: data.reverse(), overwrite }))
+                dispatch(setMessages({ chatId, messages: data.reverse(), overwrite }))
             }, isMobile ? delay : 0);
 
             handlePinnedMessages()
@@ -125,6 +129,15 @@ const MessageList = forwardRef(({ MessageListRef, gradientRenderer }, ref) => {
                     requestAnimationFrame(() => {
                         MessageListRef.current.scroll({ left: 0, top: MessageListRef.current.scrollHeight, behavior: "instant" })
                     })
+                } else {
+                    // Show cached messages while waiting for server
+                    const cached = await loadCachedMessages(activeChat.id.value);
+                    if (cached.length > 0) {
+                        dispatch(setMessages({ chatId: activeChat.id.value, messages: cached, overwrite: true }));
+                        requestAnimationFrame(() => {
+                            MessageListRef.current?.scroll({ left: 0, top: MessageListRef.current.scrollHeight, behavior: "instant" });
+                        });
+                    }
                 }
                 dispatch(handlePinnedMessage())
 
@@ -203,6 +216,7 @@ const MessageList = forwardRef(({ MessageListRef, gradientRenderer }, ref) => {
 
                 setIsLoaded(true)
                 if (result?.length) {
+                    cacheMessages(activeChat.id.value, result);
                     dispatch(unshiftMessages({ chatId: activeChat.id.value, messages: result.reverse() }))
                     setMessagesRenderCount(messages.length + result.length < messagesRenderCount * 2 ? messages.length + result.length : messagesRenderCount * 2)
                 } else

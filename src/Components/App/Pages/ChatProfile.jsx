@@ -20,11 +20,13 @@ import Tabs from "../../UI/Tabs";
 import buildClassName from "../../Util/buildClassName";
 import TabContent from "../../UI/TabContent";
 import { viewChat } from "../ChatList";
+import ExportDialog from "./Export/ExportDialog";
 
 
 export default function ChatProfile() {
     const [isLoaded, setIsLoaded] = useState(false)
     const [openDeleteModal, setOpenDeleteModal] = useState(false)
+    const [openExportDialog, setOpenExportDialog] = useState(false)
     const [tabIndex, setTabIndex] = useState(0)
 
     const dispatch = useDispatch()
@@ -108,6 +110,7 @@ export default function ChatProfile() {
                         <Menu icon="more_vert">
                             <DropdownMenu className="top right withoutTitle">
                                 {chatType === 'Channel' && fullChat?.linkedChatId && <MenuItem icon="chat" title="View Discussion" onClick={viewDiscussion} />}
+                                <MenuItem icon="download" title="Export Participants" onClick={() => setOpenExportDialog(true)} />
                                 <MenuItem icon="logout" title="Leave Group" className="danger" onClick={() => setOpenDeleteModal(true)} />
                             </DropdownMenu>
                         </Menu>
@@ -212,6 +215,7 @@ export default function ChatProfile() {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <ExportDialog open={openExportDialog} onClose={() => setOpenExportDialog(false)} chat={activeChat} peer={activeChat.entity} type="participants" />
         </>}
     </>
 }

@@ -19,9 +19,11 @@ import { removeChat } from "../../Stores/Chats"
 import { viewChat } from "../ChatList"
 import buildClassName from "../../Util/buildClassName"
 import { numberWithCommas } from "../../Util/numbers"
+import ExportDialog from "../Pages/Export/ExportDialog"
 
 function ChatInfo() {
     const [openDeleteChatModal, setOpenDeleteChatModal] = useState(false)
+    const [openExportDialog, setOpenExportDialog] = useState(false)
     const [typingAction, setTypingAction] = useState(false)
 
     const User = useContext(UserContext);
@@ -139,6 +141,7 @@ function ChatInfo() {
                 <DropdownMenu className="top right withoutTitle">
                     {chatType === 'Channel' && fullChat?.linkedChatId && <MenuItem icon="chat" title="View Discussion" onClick={viewDiscussion} />}
                     {chatType === 'Group' && fullChat?.call && <MenuItem icon="voice_chat" title="Join Voice Chat" onClick={viewDiscussion} />}
+                    <MenuItem icon="download" title="Export History" onClick={() => setOpenExportDialog(true)} />
                     <MenuItem icon="logout" title={getDeleteChatText(activeChat.entity)} className="danger" onClick={() => setOpenDeleteChatModal(true)} />
                 </DropdownMenu>
             </Menu>
@@ -178,6 +181,7 @@ function ChatInfo() {
                 </Button>
             </DialogActions>
         </Dialog>
+        <ExportDialog open={openExportDialog} onClose={() => setOpenExportDialog(false)} chat={activeChat} peer={activeChat.entity} type="history" />
     </>
 }
 

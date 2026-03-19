@@ -7,11 +7,13 @@ import { pieArcLabelClasses, PieChart } from "@mui/x-charts";
 import { formatBytes } from "../../Message/MessageMedia";
 import TextTransition from "../../../common/TextTransition";
 import { handleDialog, handleToast } from "../../../Stores/UI";
+import { getExportCacheSize, clearCache as clearExportCache } from "../../../Util/export";
 
 export default function SettingsStorageUsage() {
     const [isLoaded, setIsLoaded] = useState(false)
     const [data, setData] = useState([])
     const [totalSize, setTotalSize] = useState(0)
+    const [exportCacheSize, setExportCacheSize] = useState({ messageCount: 0, participantCount: 0, sizeBytes: 0 })
 
     const subPage = useSelector((state) => state.ui.subPage)
     const darkMode = useSelector((state) => state.settings.darkMode)
@@ -144,6 +146,8 @@ export default function SettingsStorageUsage() {
 
         (async () => {
             const sizes = await calculateCacheSize()
+            const exportSizes = await getExportCacheSize()
+            setExportCacheSize(exportSizes)
 
             entireTotalSize.current = Object.values(sizes).reduce((p, c) => p + c, 0)
 
@@ -195,6 +199,13 @@ export default function SettingsStorageUsage() {
             setData(cache)
         })()
     }, [])
+
+    const handleClearExportCache = async () => {
+        dispatch(handleToast({ icon: 'error', title: 'Cleaning Export Cache...' }))
+        await clearExportCache()
+        setExportCacheSize({ messageCount: 0, participantCount: 0, sizeBytes: 0 })
+        dispatch(handleToast({ icon: 'check_circle', title: 'Export cache cleared' }))
+    }
 
     return <>
         <div className={buildClassName("SettingsStorageUsage", !isLoaded && 'fadeThrough', subPage[2] && 'pushUp')}>
@@ -254,6 +265,22 @@ export default function SettingsStorageUsage() {
                         <div className="title">Clear Cache <TextTransition text={formatBytes(totalSize, 1)} style={{ fontSize: 14, color: '#fffa' }} /></div>
                     </div>
                 </div>
+                {exportCacheSize.sizeBytes > 0 && (
+                    <div className="Items" style={{ marginTop: 24 }}>
+                        <div className="title" style={{
+                            color: 'var(--dyn-text-color)',
+                            fontSize: 16,
+                            fontWeight: '500',
+                            marginBottom: 12,
+                        }}>Export Cache</div>
+                        <div style={{ fontSize: 13, color: 'var(--dyn-text-color)', opacity: 0.8, marginBottom: 8 }}>
+                            {exportCacheSize.messageCount.toLocaleString()} messages, {exportCacheSize.participantCount.toLocaleString()} participants
+                        </div>
+                        <div className="Button" onClick={handleClearExportCache}>
+                            <div className="title">Clear Export Cache <TextTransition text={formatBytes(exportCacheSize.sizeBytes)} style={{ fontSize: 14, color: '#fffa' }} /></div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
         {/* <Transition state={subPage[1]}><SubPage>{getSubPageLayout()}</SubPage></Transition> */}

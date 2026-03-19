@@ -6,6 +6,7 @@ import { UserContext } from "../../Auth/Auth"
 import { getChatIdFromPeer } from "../../Helpers/chats"
 import { Api } from "telegram"
 import { readHistory } from "../../Util/messages"
+import { cacheMessage } from "../../Util/messageCache"
 
 const MessagesHandler = forwardRef(({ }, ref) => {
     const chats = useSelector((state) => state.chats.value)
@@ -83,6 +84,7 @@ const MessagesHandler = forwardRef(({ }, ref) => {
 
         // if (!User._id || User._id === message.fromId && message.type !== 'call') return
         dispatch(messageAdded(message));
+        cacheMessage(chatId, message);
         if (thread && (thread.id === message.replyTo?.replyToMsgId || thread.id === message.replyTo?.replyToTopId)) {
             console.log('new comment')
             dispatch(messageAdded({ ...message, chatId: thread.chatId?.value + '_' + thread.id }));
